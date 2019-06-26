@@ -176,6 +176,7 @@ impl SchemeBlockMut for Intel8259x {
 }
 
 impl Intel8259x {
+    /// Returns an initialized `Intel8259x` on success.
     pub fn new(base: usize, size: usize) -> Result<Self> {
         #[rustfmt::skip]
         let mut module = Intel8259x {
@@ -266,6 +267,11 @@ impl Intel8259x {
         self.write_reg(IXGBE_RAH(0), high);
     }
 
+    /// Returns the register at `self.base` + `register`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.base` + `register` does not belong to the mapped memory of the PCIe device.
     fn read_reg(&self, register: u32) -> u32 {
         assert!(
             register as usize <= self.size - 4 as usize,
@@ -275,6 +281,11 @@ impl Intel8259x {
         unsafe { ptr::read_volatile((self.base + register as usize) as *mut u32) }
     }
 
+    /// Sets the register at `self.base` + `register`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `self.base` + `register` does not belong to the mapped memory of the PCIe device.
     fn write_reg(&self, register: u32, data: u32) -> u32 {
         assert!(
             register as usize <= self.size - 4 as usize,
@@ -323,6 +334,7 @@ impl Intel8259x {
         }
     }
 
+    /// Resets and initializes an ixgbe device.
     fn init(&mut self) -> Result<()> {
         println!("resetting device {}", self.base);
         // section 4.6.3.1 - disable all interrupts
@@ -518,6 +530,9 @@ impl Intel8259x {
     }
 
     /// Sets the rx queues` descriptors and enables the queues.
+    ///
+    /// # Panics
+    /// Panics if length of `self.receive_ring` is not a power of 2.
     fn start_rx_queue(&mut self, queue_id: u16) -> Result<()> {
         println!("starting rx queue {}", queue_id);
 
@@ -551,6 +566,9 @@ impl Intel8259x {
     }
 
     /// Enables the tx queues.
+    ///
+    /// # Panics
+    /// Panics if length of `self.transmit_ring` is not a power of 2.
     fn start_tx_queue(&mut self, queue_id: u16) -> Result<()> {
         println!("starting tx queue {}", queue_id);
 
