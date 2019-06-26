@@ -76,11 +76,7 @@ fn main() {
             syscall::O_RDWR | syscall::O_CREAT | syscall::O_NONBLOCK,
         )
         .expect("ixgbed: failed to create network scheme");
-        #[cfg(not(target_os = "linux"))]
         let socket = Arc::new(RefCell::new(unsafe { File::from_raw_fd(socket_fd) }));
-        // TODO: remove
-        #[cfg(target_os = "linux")]
-        let socket = Arc::new(RefCell::new(unsafe { File::from_raw_fd(socket_fd as i32) }));
 
         let mut irq_file =
             File::open(format!("irq:{}", irq)).expect("ixgbed: failed to open IRQ file");
@@ -132,7 +128,7 @@ fn main() {
 
             let device_packet = device.clone();
             let socket_packet = socket.clone();
-            #[cfg(not(target_os = "linux"))]
+
             event_queue
                 .add(socket_fd, move |_event| -> Result<Option<usize>> {
                     handle_update(
@@ -140,24 +136,6 @@ fn main() {
                         &mut device_packet.borrow_mut(),
                         &mut todo.borrow_mut(),
                     );
-
-                    let next_read = device_packet.borrow().next_read();
-                    if next_read > 0 {
-                        return Ok(Some(next_read));
-                    }
-
-                    Ok(None)
-                })
-                .expect("ixgbed: failed to catch events on scheme file");
-            // TODO: remove
-            #[cfg(target_os = "linux")]
-            event_queue
-                .add(socket_fd as i32, move |_event| -> Result<Option<usize>> {
-                    handle_update(
-                        &mut socket_packet.borrow_mut(),
-                        &mut device_packet.borrow_mut(),
-                        &mut todo.borrow_mut(),
-                    )?;
 
                     let next_read = device_packet.borrow().next_read();
                     if next_read > 0 {
