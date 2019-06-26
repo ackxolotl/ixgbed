@@ -508,9 +508,7 @@ impl Intel8259x {
     /// Panics if length of `self.receive_ring` is not a power of 2.
     fn start_rx_queue(&mut self, queue_id: u16) -> Result<()> {
         if self.receive_ring.len() & (self.receive_ring.len() - 1) != 0 {
-            // TODO
             panic!("number of receive queue entries must be a power of 2");
-            //return Err("number of receive queue entries must be a power of 2".into());
         }
 
         for i in 0..self.receive_ring.len() {
@@ -542,9 +540,7 @@ impl Intel8259x {
     /// Panics if length of `self.transmit_ring` is not a power of 2.
     fn start_tx_queue(&mut self, queue_id: u16) -> Result<()> {
         if self.transmit_ring.len() & (self.transmit_ring.len() - 1) != 0 {
-            // TODO
             panic!("number of receive queue entries must be a power of 2");
-            //return Err("number of receive queue entries must be a power of 2".into());
         }
 
         for i in 0..self.transmit_ring.len() {
