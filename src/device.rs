@@ -336,7 +336,6 @@ impl Intel8259x {
 
     /// Resets and initializes an ixgbe device.
     fn init(&mut self) -> Result<()> {
-        println!("resetting device {}", self.base);
         // section 4.6.3.1 - disable all interrupts
         self.write_reg(IXGBE_EIMC, 0x7fff_ffff);
 
@@ -349,15 +348,12 @@ impl Intel8259x {
         self.write_reg(IXGBE_EIMC, 0x7fff_ffff);
 
         let mac = self.get_mac_addr();
-        println!("initializing device {}", self.base);
 
-        print!(
-            "{}",
-            format!(
-                "   - MAC: {:>02X}:{:>02X}:{:>02X}:{:>02X}:{:>02X}:{:>02X}\n",
-                mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
-            )
+        println!(
+            "   - MAC: {:>02X}:{:>02X}:{:>02X}:{:>02X}:{:>02X}:{:>02X}",
+            mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
         );
+
         let _ = setcfg(
             "mac",
             &format!(
@@ -435,7 +431,6 @@ impl Intel8259x {
         // configure a single receive queue/ring
         let i: u32 = 0;
 
-        println!("initializing rx queue {}", i);
         // enable advanced rx descriptors
         self.write_reg(
             IXGBE_SRRCTL(i),
@@ -452,13 +447,6 @@ impl Intel8259x {
             IXGBE_RDLEN(i),
             (self.receive_ring.len() * mem::size_of::<ixgbe_adv_rx_desc>()) as u32,
         );
-
-        println!(
-            "rx ring {} phys addr: {:#x}",
-            i,
-            self.receive_ring.physical()
-        );
-        println!("rx ring {} virt addr: {:p}", i, &self.receive_ring);
 
         // set ring to empty at start
         self.write_reg(IXGBE_RDH(i), 0);
@@ -495,7 +483,6 @@ impl Intel8259x {
         // configure a single transmit queue/ring
         let i: u32 = 0;
 
-        println!("initializing tx queue {}", i);
         // section 7.1.9 - setup descriptor ring
 
         self.write_reg(IXGBE_TDBAL(i), self.transmit_ring.physical() as u32);
@@ -504,13 +491,6 @@ impl Intel8259x {
             IXGBE_TDLEN(i),
             (self.transmit_ring.len() * mem::size_of::<ixgbe_adv_tx_desc>()) as u32,
         );
-
-        println!(
-            "tx ring {} phys addr: {:#x}",
-            i,
-            self.transmit_ring.physical()
-        );
-        println!("tx ring {} virt addr: {:p}", i, &self.transmit_ring);
 
         // descriptor writeback magic values, important to get good performance and low PCIe overhead
         // see 7.2.3.4.1 and 7.2.3.5 for an explanation of these values and how to find good ones
@@ -534,8 +514,6 @@ impl Intel8259x {
     /// # Panics
     /// Panics if length of `self.receive_ring` is not a power of 2.
     fn start_rx_queue(&mut self, queue_id: u16) -> Result<()> {
-        println!("starting rx queue {}", queue_id);
-
         if self.receive_ring.len() & (self.receive_ring.len() - 1) != 0 {
             // TODO
             panic!("number of receive queue entries must be a power of 2");
@@ -570,8 +548,6 @@ impl Intel8259x {
     /// # Panics
     /// Panics if length of `self.transmit_ring` is not a power of 2.
     fn start_tx_queue(&mut self, queue_id: u16) -> Result<()> {
-        println!("starting tx queue {}", queue_id);
-
         if self.transmit_ring.len() & (self.transmit_ring.len() - 1) != 0 {
             // TODO
             panic!("number of receive queue entries must be a power of 2");
@@ -614,23 +590,21 @@ impl Intel8259x {
 
     /// Waits for the link to come up.
     fn wait_for_link(&self) {
-        println!("waiting for link");
+        println!("   - waiting for link");
         let time = Instant::now();
         let mut speed = self.get_link_speed();
         while speed == 0 && time.elapsed().as_secs() < 10 {
             thread::sleep(Duration::from_millis(100));
             speed = self.get_link_speed();
         }
-        println!("link speed is {} Mbit/s", self.get_link_speed());
+        println!("   - link speed is {} Mbit/s", self.get_link_speed());
     }
 
     /// Enables or disables promisc mode of this device.
     fn set_promisc(&self, enabled: bool) {
         if enabled {
-            println!("enabling promisc mode");
             self.write_flag(IXGBE_FCTRL, IXGBE_FCTRL_MPE | IXGBE_FCTRL_UPE);
         } else {
-            println!("disabling promisc mode");
             self.clear_flag(IXGBE_FCTRL, IXGBE_FCTRL_MPE | IXGBE_FCTRL_UPE);
         }
     }
@@ -671,8 +645,6 @@ impl Intel8259x {
         mask |= 1 << queue_id;
 
         self.write_reg(IXGBE_EIMS, mask);
-
-        println!("using MSIX interrupts");
     }
 
     /// Returns the link speed of this device.

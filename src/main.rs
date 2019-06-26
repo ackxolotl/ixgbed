@@ -67,10 +67,7 @@ fn main() {
     let irq_str = args.next().expect("ixgbed: no irq provided");
     let irq = irq_str.parse::<u8>().expect("ixgbed: failed to parse irq");
 
-    print!(
-        "{}",
-        format!(" + IXGBE {} on: {:X} IRQ: {}\n", name, bar, irq)
-    );
+    println!(" + IXGBE {} on: {:X} IRQ: {}", name, bar, irq);
 
     // Daemonize
     if unsafe { syscall::clone(0).unwrap() } == 0 {
