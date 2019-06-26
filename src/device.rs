@@ -241,7 +241,7 @@ impl Intel8259x {
     }
 
     /// Returns the mac address of this device.
-    fn get_mac_addr(&self) -> [u8; 6] {
+    pub fn get_mac_addr(&self) -> [u8; 6] {
         let low = self.read_reg(IXGBE_RAL(0));
         let high = self.read_reg(IXGBE_RAH(0));
 
@@ -256,7 +256,8 @@ impl Intel8259x {
     }
 
     /// Sets the mac address of this device.
-    fn set_mac_addr(&self, mac: [u8; 6]) {
+    #[allow(dead_code)]
+    pub fn set_mac_addr(&self, mac: [u8; 6]) {
         let low: u32 = u32::from(mac[0])
             + (u32::from(mac[1]) << 8)
             + (u32::from(mac[2]) << 16)
@@ -295,14 +296,6 @@ impl Intel8259x {
         unsafe {
             ptr::write_volatile((self.base + register as usize) as *mut u32, data);
             ptr::read_volatile((self.base + register as usize) as *mut u32)
-        }
-    }
-
-    fn flag(&self, register: u32, flag: u32, value: bool) {
-        if value {
-            self.write_reg(register, self.read_reg(register) | flag);
-        } else {
-            self.write_reg(register, self.read_reg(register) & !flag);
         }
     }
 
