@@ -16,6 +16,7 @@ use std::time::Duration;
 use syscall::{Packet, SchemeBlockMut, PHYSMAP_NO_CACHE, PHYSMAP_WRITE};
 
 pub mod device;
+#[rustfmt::skip]
 mod ixgbe;
 
 const IXGBE_MMIO_SIZE: usize = 512 * 1024;
