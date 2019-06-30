@@ -212,7 +212,7 @@ impl Intel8259x {
             handles: BTreeMap::new(),
         };
 
-        module.init()?;
+        module.init();
 
         Ok(module)
     }
@@ -328,7 +328,7 @@ impl Intel8259x {
     }
 
     /// Resets and initializes an ixgbe device.
-    fn init(&mut self) -> Result<()> {
+    fn init(&mut self) {
         // section 4.6.3.1 - disable all interrupts
         self.write_reg(IXGBE_EIMC, 0x7fff_ffff);
 
@@ -369,16 +369,16 @@ impl Intel8259x {
         self.reset_stats();
 
         // section 4.6.7 - init rx
-        self.init_rx()?;
+        self.init_rx();
 
         // section 4.6.8 - init tx
-        self.init_tx()?;
+        self.init_tx();
 
         // start a single receive queue/ring
-        self.start_rx_queue(0)?;
+        self.start_rx_queue(0);
 
         // start a single transmit queue/ring
-        self.start_tx_queue(0)?;
+        self.start_tx_queue(0);
 
         // section 4.6.3.9 - enable interrupts
         self.enable_msix_interrupt(0);
@@ -388,8 +388,6 @@ impl Intel8259x {
 
         // wait some time for the link to come up
         self.wait_for_link();
-
-        Ok(())
     }
 
     /// Resets the stats of this device.
@@ -404,7 +402,7 @@ impl Intel8259x {
 
     // sections 4.6.7
     /// Initializes the rx queues of this device.
-    fn init_rx(&mut self) -> Result<()> {
+    fn init_rx(&mut self) {
         // disable rx while re-configuring it
         self.clear_flag(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
 
@@ -453,13 +451,11 @@ impl Intel8259x {
 
         // start rx
         self.write_flag(IXGBE_RXCTRL, IXGBE_RXCTRL_RXEN);
-
-        Ok(())
     }
 
     // section 4.6.8
     /// Initializes the tx queues of this device.
-    fn init_tx(&mut self) -> Result<()> {
+    fn init_tx(&mut self) {
         // crc offload and small packet padding
         self.write_flag(IXGBE_HLREG0, IXGBE_HLREG0_TXCRCEN | IXGBE_HLREG0_TXPADEN);
 
@@ -498,15 +494,13 @@ impl Intel8259x {
 
         // final step: enable DMA
         self.write_reg(IXGBE_DMATXCTL, IXGBE_DMATXCTL_TE);
-
-        Ok(())
     }
 
     /// Sets the rx queues` descriptors and enables the queues.
     ///
     /// # Panics
     /// Panics if length of `self.receive_ring` is not a power of 2.
-    fn start_rx_queue(&mut self, queue_id: u16) -> Result<()> {
+    fn start_rx_queue(&mut self, queue_id: u16) {
         if self.receive_ring.len() & (self.receive_ring.len() - 1) != 0 {
             panic!("number of receive queue entries must be a power of 2");
         }
@@ -530,15 +524,13 @@ impl Intel8259x {
             IXGBE_RDT(u32::from(queue_id)),
             (self.receive_ring.len() - 1) as u32,
         );
-
-        Ok(())
     }
 
     /// Enables the tx queues.
     ///
     /// # Panics
     /// Panics if length of `self.transmit_ring` is not a power of 2.
-    fn start_tx_queue(&mut self, queue_id: u16) -> Result<()> {
+    fn start_tx_queue(&mut self, queue_id: u16) {
         if self.transmit_ring.len() & (self.transmit_ring.len() - 1) != 0 {
             panic!("number of receive queue entries must be a power of 2");
         }
@@ -556,8 +548,6 @@ impl Intel8259x {
         // enable queue and wait if necessary
         self.write_flag(IXGBE_TXDCTL(u32::from(queue_id)), IXGBE_TXDCTL_ENABLE);
         self.wait_write_reg(IXGBE_TXDCTL(u32::from(queue_id)), IXGBE_TXDCTL_ENABLE);
-
-        Ok(())
     }
 
     // see section 4.6.4
