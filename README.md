@@ -18,8 +18,8 @@ To run ixgbed on Redox (if the driver hasn't been included yet)
 
 * clone this project into `cookbook/recipes/drivers/source/`
 * create an entry for ixgbed in `cookbook/recipes/drivers/source/Cargo.toml`
-* add your ixgbe device to `cookbook/recipes/drivers/source/initfs.toml`
-* touch `filesystem.toml`, build Redox and run it
+* add your ixgbe device to `cookbook/recipes/drivers/source/filesystem.toml`
+* touch `filesystem.toml` in Redox's root directory, build Redox and run it
 
 ## Usage
 
