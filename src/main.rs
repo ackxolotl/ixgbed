@@ -32,7 +32,7 @@ fn handle_update(
         if let Some(a) = device.handle(&todo[i]) {
             let mut packet = todo.remove(i);
             packet.a = a;
-            socket.write_all(&packet)?;
+            socket.write(&packet)?;
         } else {
             i += 1;
         }
@@ -47,7 +47,7 @@ fn handle_update(
 
         if let Some(a) = device.handle(&packet) {
             packet.a = a;
-            socket.write_all(&packet)?;
+            socket.write(&packet)?;
         } else {
             todo.push(packet);
         }
@@ -107,9 +107,9 @@ fn main() {
                     irq_file.as_raw_fd(),
                     move |_event| -> Result<Option<usize>> {
                         let mut irq = [0; 8];
-                        irq_file.read_exact(&mut irq)?;
+                        irq_file.read(&mut irq)?;
                         if unsafe { device_irq.borrow().irq() } {
-                            irq_file.write_all(&irq)?;
+                            irq_file.write(&mut irq)?;
 
                             handle_update(
                                 &mut socket_irq.borrow_mut(),
@@ -151,7 +151,7 @@ fn main() {
                 for (handle_id, _handle) in device.borrow().handles.iter() {
                     socket
                         .borrow_mut()
-                        .write_all(&Packet {
+                        .write(&Packet {
                             id: 0,
                             pid: 0,
                             uid: 0,
