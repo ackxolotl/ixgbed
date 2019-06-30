@@ -488,7 +488,7 @@ impl Intel8259x {
         // there are no defines for this in ixgbe.rs for some reason
         // pthresh: 6:0, hthresh: 14:8, wthresh: 22:16
         txdctl &= !(0x3F | (0x3F << 8) | (0x3F << 16));
-        txdctl |= 36 | (8 << 8) | (1 << 16);
+        txdctl |= 36 | (8 << 8) | (4 << 16);
 
         self.write_reg(IXGBE_TXDCTL(i), txdctl);
 
