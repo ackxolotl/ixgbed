@@ -1,5 +1,3 @@
-#![feature(asm)]
-
 extern crate event;
 extern crate netutils;
 extern crate syscall;
