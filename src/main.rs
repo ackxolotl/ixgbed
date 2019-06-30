@@ -180,5 +180,5 @@ fn main() {
         }
     }
 
-    thread::sleep(Duration::from_secs(30));
+    thread::sleep(Duration::from_secs(20));
 }
