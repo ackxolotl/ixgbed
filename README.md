@@ -23,7 +23,7 @@ To run ixgbed on Redox (if the driver hasn't been included yet)
 
 ## Usage
 
-To test the driver's transmit and forwarding capabilities, a simple application will be released soon.
+To test the driver's transmit and forwarding capabilities, have a look at [rheinfall](https://github.com/ackxolotl/rheinfall), a simple packet generator / forwarder application.
 
 ## Docs
 
