@@ -5,7 +5,7 @@ extern crate syscall;
 use std::cell::RefCell;
 use std::fs::File;
 use std::io::{Read, Result, Write};
-use std::os::unix::io::{AsRawFd, FromRawFd};
+use std::os::unix::io::{AsRawFd, FromRawFd, RawFd};
 use std::sync::Arc;
 use std::{env, thread};
 
@@ -75,7 +75,7 @@ fn main() {
             syscall::O_RDWR | syscall::O_CREAT | syscall::O_NONBLOCK,
         )
         .expect("ixgbed: failed to create network scheme");
-        let socket = Arc::new(RefCell::new(unsafe { File::from_raw_fd(socket_fd) }));
+        let socket = Arc::new(RefCell::new(unsafe { File::from_raw_fd(socket_fd as RawFd) }));
 
         let mut irq_file =
             File::open(format!("irq:{}", irq)).expect("ixgbed: failed to open IRQ file");
@@ -129,7 +129,7 @@ fn main() {
             let socket_packet = socket.clone();
 
             event_queue
-                .add(socket_fd, move |_event| -> Result<Option<usize>> {
+                .add(socket_fd as RawFd, move |_event| -> Result<Option<usize>> {
                     handle_update(
                         &mut socket_packet.borrow_mut(),
                         &mut device_packet.borrow_mut(),
