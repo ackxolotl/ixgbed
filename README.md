@@ -7,6 +7,8 @@ It supports Intel 82599 10GbE NICs (`ixgbe` family).
 ## Features
 
 * first 10 Gbit/s network driver on Redox
+* transmitting 250 times faster than e1000 / rtl8168 driver
+* MSI-X interrupts (not supported by Redox yet)
 * less than 1000 lines of code for the driver
 * documented code
 
@@ -14,11 +16,11 @@ It supports Intel 82599 10GbE NICs (`ixgbe` family).
 
 See the [Redox README](https://gitlab.redox-os.org/redox-os/redox/blob/master/README.md) for build instructions.
 
-To run ixgbed on Redox (if the driver hasn't been included yet)
+To run ixgbed on Redox (in case the driver is not shipped with Redox anymore)
 
 * clone this project into `cookbook/recipes/drivers/source/`
 * create an entry for ixgbed in `cookbook/recipes/drivers/source/Cargo.toml`
-* add your ixgbe device to `cookbook/recipes/drivers/source/filesystem.toml`
+* check if your ixgbe device is included in `config.toml`
 * touch `filesystem.toml` in Redox's root directory, build Redox and run it
 
 ## Usage
