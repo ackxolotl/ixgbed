@@ -99,8 +99,8 @@ impl SchemeBlockMut for Intel8259x {
         if self.transmit_ring_free == 0 {
             loop {
                 let desc = unsafe {
-                    &mut *(self.transmit_ring.as_ptr().add(self.transmit_clean_index)
-                        as *mut ixgbe_adv_tx_desc)
+                    &*(self.transmit_ring.as_ptr().add(self.transmit_clean_index)
+                        as *const ixgbe_adv_tx_desc)
                 };
 
                 if (unsafe { desc.wb.status } & IXGBE_ADVTXD_STAT_DD) != 0 {
@@ -224,7 +224,7 @@ impl Intel8259x {
 
     pub fn next_read(&self) -> usize {
         let desc = unsafe {
-            &mut *(self.receive_ring.as_ptr().add(self.receive_index) as *mut ixgbe_adv_rx_desc)
+            &*(self.receive_ring.as_ptr().add(self.receive_index) as *const ixgbe_adv_rx_desc)
         };
 
         let status = unsafe { desc.wb.upper.status_error };
