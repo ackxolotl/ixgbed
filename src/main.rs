@@ -4,7 +4,7 @@ extern crate syscall;
 
 use std::cell::RefCell;
 use std::fs::File;
-use std::io::{Read, Result, Write};
+use std::io::{ErrorKind, Read, Result, Write};
 use std::os::unix::io::{AsRawFd, FromRawFd, RawFd};
 use std::sync::Arc;
 use std::{env, thread};
@@ -23,7 +23,7 @@ fn handle_update(
     socket: &mut File,
     device: &mut device::Intel8259x,
     todo: &mut Vec<Packet>,
-) -> Result<()> {
+) -> Result<bool> {
     // Handle any blocked packets
     let mut i = 0;
     while i < todo.len() {
@@ -39,8 +39,16 @@ fn handle_update(
     // Check that the socket is empty
     loop {
         let mut packet = Packet::default();
-        if socket.read(&mut packet)? == 0 {
-            break;
+        match socket.read(&mut packet) {
+            Ok(0) => return Ok(true),
+            Ok(_) => (),
+            Err(err) => {
+                if err.kind() == ErrorKind::WouldBlock {
+                    break;
+                } else {
+                    return Err(err);
+                }
+            }
         }
 
         if let Some(a) = device.handle(&packet) {
@@ -51,7 +59,7 @@ fn handle_update(
         }
     }
 
-    Ok(())
+    Ok(false)
 }
 
 fn main() {
@@ -75,7 +83,9 @@ fn main() {
             syscall::O_RDWR | syscall::O_CREAT | syscall::O_NONBLOCK,
         )
         .expect("ixgbed: failed to create network scheme");
-        let socket = Arc::new(RefCell::new(unsafe { File::from_raw_fd(socket_fd as RawFd) }));
+        let socket = Arc::new(RefCell::new(unsafe {
+            File::from_raw_fd(socket_fd as RawFd)
+        }));
 
         let mut irq_file =
             File::open(format!("irq:{}", irq)).expect("ixgbed: failed to open IRQ file");
@@ -107,13 +117,15 @@ fn main() {
                         let mut irq = [0; 8];
                         irq_file.read(&mut irq)?;
                         if unsafe { device_irq.borrow().irq() } {
-                            irq_file.write(&mut irq)?;
+                            irq_file.write(&irq)?;
 
-                            handle_update(
+                            if handle_update(
                                 &mut socket_irq.borrow_mut(),
                                 &mut device_irq.borrow_mut(),
                                 &mut todo_irq.borrow_mut(),
-                            )?;
+                            )? {
+                                return Ok(Some(0));
+                            }
 
                             let next_read = device_irq.borrow().next_read();
                             if next_read > 0 {
@@ -130,11 +142,13 @@ fn main() {
 
             event_queue
                 .add(socket_fd as RawFd, move |_event| -> Result<Option<usize>> {
-                    handle_update(
+                    if handle_update(
                         &mut socket_packet.borrow_mut(),
                         &mut device_packet.borrow_mut(),
                         &mut todo.borrow_mut(),
-                    );
+                    )? {
+                        return Ok(Some(0));
+                    }
 
                     let next_read = device_packet.borrow().next_read();
                     if next_read > 0 {
@@ -172,6 +186,11 @@ fn main() {
 
             loop {
                 let event_count = event_queue.run().expect("ixgbed: failed to handle events");
+                if event_count == 0 {
+                    //TODO: Handle todo
+                    break;
+                }
+
                 send_events(event_count);
             }
         }
